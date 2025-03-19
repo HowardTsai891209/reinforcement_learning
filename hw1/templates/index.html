@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gridworld v1.3</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .grid-container { display: grid; margin: 20px auto; justify-content: center; }
+        .grid-cell {
+            width: 50px; height: 50px;
+            border: 1px solid black;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; font-weight: bold;
+            user-select: none;
+        }
+        .start { background-color: green; color: white; }
+        .end { background-color: red; color: white; }
+        .obstacle { background-color: gray; color: white; }
+        .value-matrix, .policy-matrix {
+            display: grid;
+            margin: 20px auto;
+            justify-content: center;
+        }
+        .matrix-cell {
+            width: 50px; height: 50px;
+            border: 1px solid black;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Gridworld v1.3</h1>
+    <label for="grid-size">Select Grid Size (5-9): </label>
+    <select id="grid-size">
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+    </select>
+    <button onclick="generateGrid()">Generate Grid</button>
+    <button onclick="startIteration()">Start</button>
+
+    <div id="grid-container" class="grid-container"></div>
+
+    <h2>Value Matrix</h2>
+    <div id="value-matrix" class="value-matrix"></div>
+
+    <h2>Policy Matrix</h2>
+    <div id="policy-matrix" class="policy-matrix"></div>
+
+    <script>
+        let startSet = false, endSet = false, obstaclesCount = 0;
+        let n = 5;
+
+        function generateGrid() {
+            n = parseInt(document.getElementById('grid-size').value);
+            $.post('/set_grid_size', JSON.stringify({ size: n }), 'json');
+
+            let container = document.getElementById('grid-container');
+            container.innerHTML = '';
+            container.style.gridTemplateColumns = `repeat(${n}, 50px)`;
+
+            let num = 1;
+            for (let i = 0; i < n * n; i++) {
+                let cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.innerText = num++;
+                cell.setAttribute('data-x', Math.floor(i / n));
+                cell.setAttribute('data-y', i % n);
+                cell.onclick = () => setCell(cell);
+                container.appendChild(cell);
+            }
+
+            startSet = false;
+            endSet = false;
+            obstaclesCount = 0;
+        }
+
+        function setCell(cell) {
+            let x = cell.getAttribute('data-x');
+            let y = cell.getAttribute('data-y');
+            let type;
+
+            if (!startSet) {
+                type = 'start';
+                startSet = true;
+                cell.classList.add('start');
+            } else if (!endSet) {
+                type = 'end';
+                endSet = true;
+                cell.classList.add('end');
+            } else if (obstaclesCount < n - 2) {
+                type = 'obstacle';
+                obstaclesCount++;
+                cell.classList.add('obstacle');
+            } else {
+                return;
+            }
+
+            $.post('/set_cell', JSON.stringify({ x: x, y: y, type: type }), 'json');
+        }
+
+        function startIteration() {
+            $.post('/start_iteration', function(response) {
+                displayMatrix('value-matrix', response.value_matrix);
+                displayMatrix('policy-matrix', response.policy_matrix);
+            });
+        }
+
+        function displayMatrix(elementId, matrix) {
+            let container = document.getElementById(elementId);
+            container.innerHTML = '';
+            container.style.gridTemplateColumns = `repeat(${matrix.length}, 50px)`;
+
+            matrix.forEach(row => {
+                row.forEach(value => {
+                    let cell = document.createElement('div');
+                    cell.className = 'matrix-cell';
+                    cell.innerText = value;
+                    container.appendChild(cell);
+                });
+            });
+        }
+    </script>
+
+</body>
+</html>
