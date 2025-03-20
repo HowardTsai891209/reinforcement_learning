@@ -3,84 +3,61 @@ import numpy as np
 
 app = Flask(__name__)
 
-# 預設 Gridworld 大小
-n = 5
-gamma = 0.9  # 折扣因子
-theta = 0.0001  # 收斂條件
-rewards = np.zeros((n, n))
-policy = np.full((n, n), ' ')
-value_matrix = np.zeros((n, n))
-actions = {'↑': (-1, 0), '↓': (1, 0), '←': (0, -1), '→': (0, 1)}
-start_point = None
-end_point = None
+# Hyperparameters
+gamma = 0.9  # Discount factor
+theta = 0.0001  # Convergence threshold
+
+# Directions for policy (up, down, left, right)
+actions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+
+def value_iteration(n, start, end, obstacles):
+    V = np.zeros((n, n))  # Value function
+    policy = np.zeros((n, n), dtype=int)  # Policy array
+    delta = float('inf')
+
+    while delta >= theta:
+        delta = 0
+        for i in range(n):
+            for j in range(n):
+                if (i, j) == start or (i, j) == end or (i, j) in obstacles:
+                    continue  # Skip start, end, and obstacles
+                v = V[i, j]
+                max_value = -float('inf')
+                best_action = -1
+
+                for a_idx, (di, dj) in enumerate(actions):
+                    ni, nj = i + di, j + dj
+                    if 0 <= ni < n and 0 <= nj < n and (ni, nj) not in obstacles:
+                        value = -1 + gamma * V[ni, nj]
+                        if value > max_value:
+                            max_value = value
+                            best_action = a_idx
+
+                V[i, j] = max_value
+                policy[i, j] = best_action
+                delta = max(delta, abs(v - V[i, j]))
+
+    return V, policy
 
 @app.route('/')
 def index():
-    return render_template('index.html', n=n)
+    return render_template('index.html')
 
-@app.route('/set_grid_size', methods=['POST'])
-def set_grid_size():
-    global n, rewards, value_matrix, policy
+@app.route('/update', methods=['POST'])
+def update():
     data = request.json
-    n = int(data.get('size', 5))
-    rewards = np.zeros((n, n))
-    value_matrix = np.zeros((n, n))
-    policy = np.full((n, n), ' ')
-    return jsonify({'status': 'success', 'n': n})
+    n = data['n']
+    start = tuple(data['start'])
+    end = tuple(data['end'])
+    obstacles = [tuple(obs) for obs in data['obstacles']]
 
-@app.route('/set_cell', methods=['POST'])
-def set_cell():
-    global start_point, end_point
-    data = request.json
-    x, y, cell_type = int(data['x']), int(data['y']), data['type']
-
-    if cell_type == 'start':
-        start_point = (x, y)
-    elif cell_type == 'end':
-        end_point = (x, y)
-        rewards[x, y] = 1
-
-    return jsonify({'status': 'success'})
-
-@app.route('/start_iteration', methods=['POST'])
-def start_iteration():
-    global value_matrix, policy
-
-    if start_point is None or end_point is None:
-        return jsonify({'error': 'Please set start and end points first!'}), 400
-
-    value_iteration()
-    return jsonify({'value_matrix': value_matrix.tolist(), 'policy_matrix': policy.tolist()})
-
-def value_iteration():
-    global value_matrix, policy
-    while True:
-        delta = 0
-        new_value_matrix = np.copy(value_matrix)
-
-        for i in range(n):
-            for j in range(n):
-                if (i, j) == end_point:
-                    continue
-
-                max_value = float('-inf')
-                best_action = ' '
-
-                for action, (dx, dy) in actions.items():
-                    new_i, new_j = i + dx, j + dy
-                    if 0 <= new_i < n and 0 <= new_j < n:
-                        value = rewards[i, j] + gamma * value_matrix[new_i, new_j]
-                        if value > max_value:
-                            max_value = value
-                            best_action = action
-
-                new_value_matrix[i, j] = max_value
-                policy[i, j] = best_action
-                delta = max(delta, abs(value_matrix[i, j] - max_value))
-
-        value_matrix = new_value_matrix
-        if delta < theta:
-            break
+    # Run value iteration to get V(s) and policy
+    V, policy = value_iteration(n, start, end, obstacles)
+    
+    return jsonify({
+        'V': V.tolist(),
+        'policy': policy.tolist()
+    })
 
 if __name__ == '__main__':
     app.run(debug=True)

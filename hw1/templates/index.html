@@ -3,130 +3,211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gridworld v1.3</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        .grid-container { display: grid; margin: 20px auto; justify-content: center; }
-        .grid-cell {
-            width: 50px; height: 50px;
-            border: 1px solid black;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px; font-weight: bold;
-            user-select: none;
-        }
-        .start { background-color: green; color: white; }
-        .end { background-color: red; color: white; }
-        .obstacle { background-color: gray; color: white; }
-        .value-matrix, .policy-matrix {
-            display: grid;
-            margin: 20px auto;
-            justify-content: center;
-        }
-        .matrix-cell {
-            width: 50px; height: 50px;
-            border: 1px solid black;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 14px;
-        }
-    </style>
+    <title>Gridworld - Value Iteration</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-
-    <h1>Gridworld v1.3</h1>
-    <label for="grid-size">Select Grid Size (5-9): </label>
+    <h1>Gridworld - Value Iteration</h1>
+    
+    <!-- Grid Size Selection -->
+    <label for="grid-size">Grid Size (n x n):</label>
     <select id="grid-size">
-        <option value="5">5</option>
-        <option value="6">6</option>
-        <option value="7">7</option>
-        <option value="8">8</option>
-        <option value="9">9</option>
+        <option value="5">5 x 5</option>
+        <option value="6">6 x 6</option>
+        <option value="7">7 x 7</option>
+        <option value="8">8 x 8</option>
+        <option value="9">9 x 9</option>
     </select>
     <button onclick="generateGrid()">Generate Grid</button>
-    <button onclick="startIteration()">Start</button>
 
-    <div id="grid-container" class="grid-container"></div>
+    <!-- Display Grids -->
+    <h2>Initial Grid</h2>
+    <div id="grid"></div>
 
     <h2>Value Matrix</h2>
-    <div id="value-matrix" class="value-matrix"></div>
+    <div id="value-matrix"></div>
 
     <h2>Policy Matrix</h2>
-    <div id="policy-matrix" class="policy-matrix"></div>
+    <div id="policy-matrix"></div>
+
+    <!-- Start Computation Button -->
+    <button id="start-computation" onclick="startComputation()">Start Computation</button>
 
     <script>
-        let startSet = false, endSet = false, obstaclesCount = 0;
-        let n = 5;
+        let n = 5;  // default grid size
+        let start = null;
+        let end = null;
+        let obstacles = [];
+        let computed = false;
 
+        // Generates an n x n grid
         function generateGrid() {
-            n = parseInt(document.getElementById('grid-size').value);
-            $.post('/set_grid_size', JSON.stringify({ size: n }), 'json');
+            n = parseInt(document.getElementById("grid-size").value);
+            const gridDiv = document.getElementById("grid");
+            gridDiv.innerHTML = '';
+            obstacles = [];
 
-            let container = document.getElementById('grid-container');
-            container.innerHTML = '';
-            container.style.gridTemplateColumns = `repeat(${n}, 50px)`;
-
-            let num = 1;
-            for (let i = 0; i < n * n; i++) {
-                let cell = document.createElement('div');
-                cell.className = 'grid-cell';
-                cell.innerText = num++;
-                cell.setAttribute('data-x', Math.floor(i / n));
-                cell.setAttribute('data-y', i % n);
-                cell.onclick = () => setCell(cell);
-                container.appendChild(cell);
+            let cellNumber = 1;  // Start numbering cells from 1
+            for (let i = 0; i < n; i++) {
+                let row = document.createElement("div");
+                row.className = 'grid-row';
+                for (let j = 0; j < n; j++) {
+                    let cell = document.createElement("div");
+                    cell.className = 'grid-cell';
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.dataset.number = cellNumber++;
+                    cell.onclick = cellClick;
+                    cell.innerText = cellNumber - 1;  // Display cell number
+                    row.appendChild(cell);
+                }
+                gridDiv.appendChild(row);
             }
-
-            startSet = false;
-            endSet = false;
-            obstaclesCount = 0;
         }
 
-        function setCell(cell) {
-            let x = cell.getAttribute('data-x');
-            let y = cell.getAttribute('data-y');
-            let type;
+        // Handles cell clicks for setting start, end, or obstacles
+        function cellClick(event) {
+            const row = event.target.dataset.row;
+            const col = event.target.dataset.col;
+            const coords = [parseInt(row), parseInt(col)];
 
-            if (!startSet) {
-                type = 'start';
-                startSet = true;
-                cell.classList.add('start');
-            } else if (!endSet) {
-                type = 'end';
-                endSet = true;
-                cell.classList.add('end');
-            } else if (obstaclesCount < n - 2) {
-                type = 'obstacle';
-                obstaclesCount++;
-                cell.classList.add('obstacle');
-            } else {
-                return;
+            if (!start) {
+                start = coords;
+                event.target.style.backgroundColor = "green";
+                event.target.innerText = "S";  // Label start
+            } else if (!end) {
+                end = coords;
+                event.target.style.backgroundColor = "red";
+                event.target.innerText = "E";  // Label end
+            } else if (!obstacles.some(o => JSON.stringify(o) === JSON.stringify(coords)) && obstacles.length < n-2) {
+                obstacles.push(coords);
+                event.target.style.backgroundColor = "gray";
+                event.target.innerText = "X";  // Label obstacle
             }
 
-            $.post('/set_cell', JSON.stringify({ x: x, y: y, type: type }), 'json');
+            if (start && end && !computed) {
+                document.getElementById('start-computation').disabled = false;  // Enable button after setting start and end
+            }
         }
 
-        function startIteration() {
-            $.post('/start_iteration', function(response) {
-                displayMatrix('value-matrix', response.value_matrix);
-                displayMatrix('policy-matrix', response.policy_matrix);
+        // Sends data to the backend to compute V(s) and policy
+        function sendUpdateRequest() {
+            const data = {
+                n: n,
+                start: start,
+                end: end,
+                obstacles: obstacles
+            };
+
+            fetch('/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                renderValueMatrix(data.V);
+                renderPolicyMatrix(data.policy);
+                computed = true;
             });
         }
 
-        function displayMatrix(elementId, matrix) {
-            let container = document.getElementById(elementId);
-            container.innerHTML = '';
-            container.style.gridTemplateColumns = `repeat(${matrix.length}, 50px)`;
+        // Start computation for value iteration and policy update
+        function startComputation() {
+            sendUpdateRequest();
+            document.getElementById('start-computation').disabled = true;  // Disable button after computation starts
+        }
 
-            matrix.forEach(row => {
-                row.forEach(value => {
-                    let cell = document.createElement('div');
-                    cell.className = 'matrix-cell';
-                    cell.innerText = value;
-                    container.appendChild(cell);
-                });
-            });
+        // Render the Value Matrix grid
+        function renderValueMatrix(values) {
+            const valueMatrixDiv = document.getElementById("value-matrix");
+            valueMatrixDiv.innerHTML = '';
+            for (let i = 0; i < n; i++) {
+                let row = document.createElement("div");
+                for (let j = 0; j < n; j++) {
+                    let cell = document.createElement("div");
+                    cell.className = 'grid-cell';
+                    // Display color for start, end, and obstacles
+                    if (start && start[0] === i && start[1] === j) {
+                        cell.style.backgroundColor = "green";
+                        cell.innerText = "S";  // Label start
+                    } else if (end && end[0] === i && end[1] === j) {
+                        cell.style.backgroundColor = "red";
+                        cell.innerText = "E";  // Label end
+                    } else if (obstacles.some(o => o[0] === i && o[1] === j)) {
+                        cell.style.backgroundColor = "gray";
+                        cell.innerText = "X";  // Label obstacle
+                    } else {
+                        // Otherwise, display the value
+                        cell.innerText = values[i][j].toFixed(2);
+                    }
+                    row.appendChild(cell);
+                }
+                valueMatrixDiv.appendChild(row);
+            }
+        }
+
+        // Render the Policy Matrix grid
+        function renderPolicyMatrix(policy) {
+            const policyMatrixDiv = document.getElementById("policy-matrix");
+            policyMatrixDiv.innerHTML = '';
+            const directions = ['↑', '↓', '←', '→'];
+
+            for (let i = 0; i < n; i++) {
+                let row = document.createElement("div");
+                for (let j = 0; j < n; j++) {
+                    let cell = document.createElement("div");
+                    cell.className = 'grid-cell';
+                    // Display color for start, end, and obstacles
+                    if (start && start[0] === i && start[1] === j) {
+                        cell.style.backgroundColor = "green";
+                    } else if (end && end[0] === i && end[1] === j) {
+                        cell.style.backgroundColor = "red";
+                    } else if (obstacles.some(o => o[0] === i && o[1] === j)) {
+                        cell.style.backgroundColor = "gray";
+                    } else {
+                        // Display the arrow for policy, modified to avoid pointing to boundaries
+                        let bestDirection = findBestDirection(i, j, policy);
+                        if (bestDirection !== -1) {
+                            cell.innerText = directions[bestDirection];
+                        }
+                    }
+                    row.appendChild(cell);
+                }
+                policyMatrixDiv.appendChild(row);
+            }
+        }
+
+        // Find the best direction for a cell based on its value matrix
+        function findBestDirection(row, col, policy) {
+            const directions = [
+                [-1, 0],  // Up
+                [1, 0],   // Down
+                [0, -1],  // Left
+                [0, 1],   // Right
+            ];
+
+            let maxValue = -Infinity;
+            let bestDirection = -1;
+
+            for (let i = 0; i < directions.length; i++) {
+                const [dx, dy] = directions[i];
+                const newRow = row + dx;
+                const newCol = col + dy;
+
+                if (newRow >= 0 && newRow < n && newCol >= 0 && newCol < n && !obstacles.some(o => o[0] === newRow && o[1] === newCol)) {
+                    const value = policy[newRow][newCol];
+                    if (value > maxValue) {
+                        maxValue = value;
+                        bestDirection = i;
+                    }
+                }
+            }
+
+            return bestDirection;
         }
     </script>
-
 </body>
 </html>

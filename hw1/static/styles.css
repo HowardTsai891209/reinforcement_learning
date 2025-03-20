@@ -1,0 +1,63 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    text-align: center;
+}
+
+h1 {
+    margin-bottom: 20px;
+}
+
+h2 {
+    margin-top: 30px;
+}
+
+#grid, #value-matrix, #policy-matrix {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: 5px;
+    margin: 20px 0;
+}
+
+.grid-row {
+    display: flex;
+}
+
+.grid-cell {
+    width: 50px;
+    height: 50px;
+    border: 1px solid #ccc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+/* Ensuring grid cells are square for nxn grid */
+#grid {
+    grid-template-columns: repeat(var(--n), 1fr);  /* dynamic grid columns based on n */
+    grid-template-rows: repeat(var(--n), 1fr);     /* dynamic grid rows based on n */
+}
+
+/* Grid colors */
+.grid-cell[data-row][data-col] {
+    background-color: white;
+}
+
+.grid-cell[data-start] {
+    background-color: green;
+}
+
+.grid-cell[data-end] {
+    background-color: red;
+}
+
+.grid-cell[data-obstacle] {
+    background-color: gray;
+}
+
+button {
+    margin-top: 20px;
+}
