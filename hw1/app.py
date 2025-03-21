@@ -3,61 +3,98 @@ import numpy as np
 
 app = Flask(__name__)
 
-# Hyperparameters
-gamma = 0.9  # Discount factor
-theta = 0.0001  # Convergence threshold
+# 固定參數
+GAMMA = 0.9  # 折扣因子
+theta = 0.01  # 收斂條件
+actions = {'↑': (-1, 0), '↓': (1, 0), '←': (0, -1), '→': (0, 1)}
 
-# Directions for policy (up, down, left, right)
-actions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-
-def value_iteration(n, start, end, obstacles):
-    V = np.zeros((n, n))  # Value function
-    policy = np.zeros((n, n), dtype=int)  # Policy array
-    delta = float('inf')
-
-    while delta >= theta:
+def value_iteration(grid_size, start, end, obstacles):
+    V = np.zeros((grid_size, grid_size))
+    policy = np.full((grid_size, grid_size), '', dtype=object)
+    
+    while True:
         delta = 0
-        for i in range(n):
-            for j in range(n):
-                if (i, j) == start or (i, j) == end or (i, j) in obstacles:
-                    continue  # Skip start, end, and obstacles
-                v = V[i, j]
-                max_value = -float('inf')
-                best_action = -1
+        for x in range(grid_size):
+            for y in range(grid_size):
+                if (x, y) in obstacles or (x, y) == end:
+                    continue  # 障礙物與終點不更新
+                
+                v_old = V[x, y]
+                best_value = float('-inf')
+                best_actions = []
+                
+                for action, (dx, dy) in actions.items():
+                    nx, ny = x + dx, y + dy
+                    if 0 <= nx < grid_size and 0 <= ny < grid_size and (nx, ny) not in obstacles:
+                        reward = 1 if (nx, ny) == end else 0  # 終點獲得獎勵
+                        new_value = reward + GAMMA * V[nx, ny]
+                        if new_value > best_value:
+                            best_value = new_value
+                            best_actions = [action]  # 更新最佳動作
+                        elif new_value == best_value:
+                            best_actions.append(action)  # 記錄多個最優動作
+                
+                V[x, y] = best_value if best_value != float('-inf') else 0
+                policy[x, y] = ''.join(best_actions) if best_actions else ' '
+                delta = max(delta, abs(v_old - V[x, y]))
+        
+        if delta < theta:
+            break
+    
+    return V.tolist(), policy.tolist()
 
-                for a_idx, (di, dj) in enumerate(actions):
-                    ni, nj = i + di, j + dj
-                    if 0 <= ni < n and 0 <= nj < n and (ni, nj) not in obstacles:
-                        value = -1 + gamma * V[ni, nj]
-                        if value > max_value:
-                            max_value = value
-                            best_action = a_idx
+def traversal_path(grid_size, start, end, obstacles):
+    visited = set()
+    path = []
+    
+    def dfs(x, y):
+        if (x, y) in visited or (x, y) in obstacles or x < 0 or x >= grid_size or y < 0 or y >= grid_size:
+            return False
+        visited.add((x, y))
+        path.append((x, y))
+        
+        if (x, y) == end:
+            return True
+        
+        for dx, dy in actions.values():
+            if dfs(x + dx, y + dy):
+                return True
+        
+        return False
+    
+    dfs(start[0], start[1])
+    return path
 
-                V[i, j] = max_value
-                policy[i, j] = best_action
-                delta = max(delta, abs(v - V[i, j]))
-
-    return V, policy
-
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    return render_template('index.html')
+    n = 5
+    if request.method == 'POST':
+        n = int(request.form.get('n', 5))
+        if n < 3 or n > 10:
+            n = 5
+    return render_template('index.html', n=n)
 
-@app.route('/update', methods=['POST'])
-def update():
+@app.route('/compute_policy', methods=['POST'])
+def compute_policy():
     data = request.json
-    n = data['n']
+    grid_size = data['grid_size']
     start = tuple(data['start'])
     end = tuple(data['end'])
-    obstacles = [tuple(obs) for obs in data['obstacles']]
-
-    # Run value iteration to get V(s) and policy
-    V, policy = value_iteration(n, start, end, obstacles)
+    obstacles = {tuple(obs) for obs in data['obstacles']}
     
-    return jsonify({
-        'V': V.tolist(),
-        'policy': policy.tolist()
-    })
+    value_matrix, policy_matrix = value_iteration(grid_size, start, end, obstacles)
+    return jsonify({'value_matrix': value_matrix, 'policy_matrix': policy_matrix})
+
+@app.route('/compute_traversal', methods=['POST'])
+def compute_traversal():
+    data = request.json
+    grid_size = data['grid_size']
+    start = tuple(data['start'])
+    end = tuple(data['end'])
+    obstacles = {tuple(obs) for obs in data['obstacles']}
+    
+    traversal_path_list = traversal_path(grid_size, start, end, obstacles)
+    return jsonify({'traversal_path': traversal_path_list})
 
 if __name__ == '__main__':
     app.run(debug=True)

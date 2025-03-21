@@ -1,213 +1,249 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gridworld - Value Iteration</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-<body>
-    <h1>Gridworld - Value Iteration</h1>
-    
-    <!-- Grid Size Selection -->
-    <label for="grid-size">Grid Size (n x n):</label>
-    <select id="grid-size">
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grid Map</title>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background-color: #f4f4f4;
+      }
+      h1 {
+        margin-bottom: 15px;
+        font-size: 2rem;
+        color: #333;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+      p {
+        margin-bottom: 20px;
+        font-size: 1.1rem;
+        color: #666;
+      }
+      form {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      select,
+      button {
+        padding: 8px 12px;
+        font-size: 1rem;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+      }
+      select {
+        background-color: white;
+        cursor: pointer;
+      }
+      button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      .grid-container {
+        display: grid;
+        gap: 5px;
+        background-color: white;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+      .cell {
+        width: 40px;
+        height: 40px;
+        background-color: white;
+        border: 1px solid black;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1rem;
+        font-weight: bold;
+        position: relative;
+        transition: background 0.3s ease;
+        user-select: none; /* 禁止選取格子內的數字 */
+      }
+      .cell span {
+        pointer-events: none; /* 禁止點擊時選中文字 */
+      }
+
+      .cell:hover {
+        background-color: #ddd;
+      }
+      .start {
+        background-color: green;
+        color: white;
+      }
+      .end {
+        background-color: red;
+        color: white;
+      }
+      .obstacle {
+        background-color: gray;
+      }
+      .grid-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+      }
+      .grid-section {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Interactive Grid Maps</h1>
+    <p>
+      Click a cell to set the green start point, the red end point, and up to
+      (Grid Size - 2) gray obstacles.
+    </p>
+
+    <form method="post" id="gridForm">
+      <label for="n">Grid Size:</label>
+      <select name="n" id="gridSize">
         <option value="5">5 x 5</option>
         <option value="6">6 x 6</option>
         <option value="7">7 x 7</option>
         <option value="8">8 x 8</option>
         <option value="9">9 x 9</option>
-    </select>
-    <button onclick="generateGrid()">Generate Grid</button>
+      </select>
+      <button type="submit">Set Grid</button>
+    </form>
 
-    <!-- Display Grids -->
-    <h2>Initial Grid</h2>
-    <div id="grid"></div>
+    <button id="computeButton">Start Algorithm</button>
 
-    <h2>Value Matrix</h2>
-    <div id="value-matrix"></div>
-
-    <h2>Policy Matrix</h2>
-    <div id="policy-matrix"></div>
-
-    <!-- Start Computation Button -->
-    <button id="start-computation" onclick="startComputation()">Start Computation</button>
+    <div class="grid-wrapper">
+      <div class="grid-section">
+        <h3>User Input Grid</h3>
+        <div id="grid" class="grid-container"></div>
+      </div>
+      <div class="grid-section">
+        <h3>Value Matrix</h3>
+        <div id="valueGrid" class="grid-container"></div>
+      </div>
+      <div class="grid-section">
+        <h3>Policy Matrix</h3>
+        <div id="policyGrid" class="grid-container"></div>
+      </div>
+      <div class="grid-section">
+        <h3>Animation Grid</h3>
+        <div id="animationGrid" class="grid-container"></div>
+      </div>
+    </div>
 
     <script>
-        let n = 5;  // default grid size
-        let start = null;
-        let end = null;
-        let obstacles = [];
-        let computed = false;
+      // 儲存使用者選擇的 n
+      const gridSizeSelect = document.getElementById("gridSize");
+      if (localStorage.getItem("selectedGridSize")) {
+        gridSizeSelect.value = localStorage.getItem("selectedGridSize");
+      }
 
-        // Generates an n x n grid
-        function generateGrid() {
-            n = parseInt(document.getElementById("grid-size").value);
-            const gridDiv = document.getElementById("grid");
-            gridDiv.innerHTML = '';
-            obstacles = [];
+      gridSizeSelect.addEventListener("change", function () {
+        localStorage.setItem("selectedGridSize", this.value);
+      });
 
-            let cellNumber = 1;  // Start numbering cells from 1
-            for (let i = 0; i < n; i++) {
-                let row = document.createElement("div");
-                row.className = 'grid-row';
-                for (let j = 0; j < n; j++) {
-                    let cell = document.createElement("div");
-                    cell.className = 'grid-cell';
-                    cell.dataset.row = i;
-                    cell.dataset.col = j;
-                    cell.dataset.number = cellNumber++;
-                    cell.onclick = cellClick;
-                    cell.innerText = cellNumber - 1;  // Display cell number
-                    row.appendChild(cell);
-                }
-                gridDiv.appendChild(row);
-            }
+      // 取得 n 的數值
+      const n = parseInt(gridSizeSelect.value);
+      const grid = document.getElementById("grid");
+      const valueGrid = document.getElementById("valueGrid");
+      const policyGrid = document.getElementById("policyGrid");
+      const animationGrid = document.getElementById("animationGrid");
+
+      function createGrid(container) {
+        container.innerHTML = ""; // 清除舊的 grid
+        container.style.gridTemplateColumns = `repeat(${n}, 45px)`;
+        let count = 1; // 初始數字
+        for (let row = 0; row < n; row++) {
+          for (let col = 0; col < n; col++) {
+            const cell = document.createElement("div");
+            cell.classList.add("cell");
+            cell.dataset.row = row;
+            cell.dataset.col = col;
+
+            // 用 <span> 來放數字，避免影響點擊
+            const number = document.createElement("span");
+            number.textContent = count++;
+            cell.appendChild(number);
+
+            container.appendChild(cell);
+          }
+        }
+      }
+
+      createGrid(grid);
+      createGrid(valueGrid);
+      createGrid(policyGrid);
+      createGrid(animationGrid);
+
+      let start = null;
+      let end = null;
+      let obstacles = [];
+
+      grid.addEventListener("click", (e) => {
+        const cell = e.target;
+        if (!cell.classList.contains("cell")) return;
+
+        const row = parseInt(cell.dataset.row);
+        const col = parseInt(cell.dataset.col);
+
+        if (!start) {
+          cell.classList.add("start");
+          start = [row, col];
+        } else if (!end && !cell.classList.contains("start")) {
+          cell.classList.add("end");
+          end = [row, col];
+        } else if (
+          !cell.classList.contains("start") &&
+          !cell.classList.contains("end") &&
+          obstacles.length < n - 2
+        ) {
+          cell.classList.add("obstacle");
+          obstacles.push([row, col]);
+        }
+      });
+
+      document.getElementById("computeButton").addEventListener("click", () => {
+        if (!start || !end) {
+          alert("Please select start and end points.");
+          return;
         }
 
-        // Handles cell clicks for setting start, end, or obstacles
-        function cellClick(event) {
-            const row = event.target.dataset.row;
-            const col = event.target.dataset.col;
-            const coords = [parseInt(row), parseInt(col)];
+        fetch("/compute_policy", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ grid_size: n, start, end, obstacles }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            displayResults(valueGrid, data.value_matrix);
+            displayResults(policyGrid, data.policy_matrix, true);
+          })
+          .catch((error) => console.error("Error:", error));
+      });
 
-            if (!start) {
-                start = coords;
-                event.target.style.backgroundColor = "green";
-                event.target.innerText = "S";  // Label start
-            } else if (!end) {
-                end = coords;
-                event.target.style.backgroundColor = "red";
-                event.target.innerText = "E";  // Label end
-            } else if (!obstacles.some(o => JSON.stringify(o) === JSON.stringify(coords)) && obstacles.length < n-2) {
-                obstacles.push(coords);
-                event.target.style.backgroundColor = "gray";
-                event.target.innerText = "X";  // Label obstacle
-            }
-
-            if (start && end && !computed) {
-                document.getElementById('start-computation').disabled = false;  // Enable button after setting start and end
-            }
-        }
-
-        // Sends data to the backend to compute V(s) and policy
-        function sendUpdateRequest() {
-            const data = {
-                n: n,
-                start: start,
-                end: end,
-                obstacles: obstacles
-            };
-
-            fetch('/update', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(data => {
-                renderValueMatrix(data.V);
-                renderPolicyMatrix(data.policy);
-                computed = true;
-            });
-        }
-
-        // Start computation for value iteration and policy update
-        function startComputation() {
-            sendUpdateRequest();
-            document.getElementById('start-computation').disabled = true;  // Disable button after computation starts
-        }
-
-        // Render the Value Matrix grid
-        function renderValueMatrix(values) {
-            const valueMatrixDiv = document.getElementById("value-matrix");
-            valueMatrixDiv.innerHTML = '';
-            for (let i = 0; i < n; i++) {
-                let row = document.createElement("div");
-                for (let j = 0; j < n; j++) {
-                    let cell = document.createElement("div");
-                    cell.className = 'grid-cell';
-                    // Display color for start, end, and obstacles
-                    if (start && start[0] === i && start[1] === j) {
-                        cell.style.backgroundColor = "green";
-                        cell.innerText = "S";  // Label start
-                    } else if (end && end[0] === i && end[1] === j) {
-                        cell.style.backgroundColor = "red";
-                        cell.innerText = "E";  // Label end
-                    } else if (obstacles.some(o => o[0] === i && o[1] === j)) {
-                        cell.style.backgroundColor = "gray";
-                        cell.innerText = "X";  // Label obstacle
-                    } else {
-                        // Otherwise, display the value
-                        cell.innerText = values[i][j].toFixed(2);
-                    }
-                    row.appendChild(cell);
-                }
-                valueMatrixDiv.appendChild(row);
-            }
-        }
-
-        // Render the Policy Matrix grid
-        function renderPolicyMatrix(policy) {
-            const policyMatrixDiv = document.getElementById("policy-matrix");
-            policyMatrixDiv.innerHTML = '';
-            const directions = ['↑', '↓', '←', '→'];
-
-            for (let i = 0; i < n; i++) {
-                let row = document.createElement("div");
-                for (let j = 0; j < n; j++) {
-                    let cell = document.createElement("div");
-                    cell.className = 'grid-cell';
-                    // Display color for start, end, and obstacles
-                    if (start && start[0] === i && start[1] === j) {
-                        cell.style.backgroundColor = "green";
-                    } else if (end && end[0] === i && end[1] === j) {
-                        cell.style.backgroundColor = "red";
-                    } else if (obstacles.some(o => o[0] === i && o[1] === j)) {
-                        cell.style.backgroundColor = "gray";
-                    } else {
-                        // Display the arrow for policy, modified to avoid pointing to boundaries
-                        let bestDirection = findBestDirection(i, j, policy);
-                        if (bestDirection !== -1) {
-                            cell.innerText = directions[bestDirection];
-                        }
-                    }
-                    row.appendChild(cell);
-                }
-                policyMatrixDiv.appendChild(row);
-            }
-        }
-
-        // Find the best direction for a cell based on its value matrix
-        function findBestDirection(row, col, policy) {
-            const directions = [
-                [-1, 0],  // Up
-                [1, 0],   // Down
-                [0, -1],  // Left
-                [0, 1],   // Right
-            ];
-
-            let maxValue = -Infinity;
-            let bestDirection = -1;
-
-            for (let i = 0; i < directions.length; i++) {
-                const [dx, dy] = directions[i];
-                const newRow = row + dx;
-                const newCol = col + dy;
-
-                if (newRow >= 0 && newRow < n && newCol >= 0 && newCol < n && !obstacles.some(o => o[0] === newRow && o[1] === newCol)) {
-                    const value = policy[newRow][newCol];
-                    if (value > maxValue) {
-                        maxValue = value;
-                        bestDirection = i;
-                    }
-                }
-            }
-
-            return bestDirection;
-        }
+      function displayResults(container, matrix, isPolicy = false) {
+        container.querySelectorAll(".cell").forEach((cell) => {
+          const row = parseInt(cell.dataset.row);
+          const col = parseInt(cell.dataset.col);
+          cell.textContent = isPolicy
+            ? matrix[row][col]
+            : matrix[row][col].toFixed(2);
+        });
+      }
     </script>
-</body>
+  </body>
 </html>
