@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grid Map</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        h1 {
+            margin-bottom: 15px;
+            font-size: 2rem;
+            color: #333;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        p {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        form {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        select,
+        button {
+            padding: 8px 12px;
+            font-size: 1rem;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        select {
+            background-color: white;
+            cursor: pointer;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .grid-container {
+            display: grid;
+            gap: 5px;
+            background-color: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            border: 1px solid black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1rem;
+            font-weight: bold;
+            position: relative;
+            transition: background 0.3s ease;
+            user-select: none;
+            /* 禁止選取格子內的數字 */
+        }
+
+        .cell span {
+            pointer-events: none;
+            /* 禁止點擊時選中文字 */
+        }
+
+        .cell:hover {
+            background-color: #ddd;
+        }
+
+        .start {
+            background-color: green;
+            color: white;
+        }
+
+        .end {
+            background-color: red;
+            color: white;
+        }
+
+        .obstacle {
+            background-color: gray;
+        }
+
+        .grid-wrapper {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            /* 兩欄 */
+            gap: 20px;
+            /* 設定網格間距 */
+        }
+
+        .grid-section {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Grid Map</h1>
+    <p>
+        1.指定網格大小N
+    </p>
+    <p>
+        2.第一次點擊指定起點，第二次點擊指定終點，第三次點擊指定障礙物(最多n-2個)
+    </p>
+
+    <form method="post" id="gridForm">
+        <label for="n">Grid Size:</label>
+        <select name="n" id="gridSize">
+            <option value="5">5 x 5</option>
+            <option value="6">6 x 6</option>
+            <option value="7">7 x 7</option>
+            <option value="8">8 x 8</option>
+            <option value="9">9 x 9</option>
+        </select>
+        <button type="submit">Generate Grid</button>
+    </form>
+
+    <button id="computeButton">Start Iteration</button>
+
+    <div class="grid-wrapper">
+        <!-- 第一排：User Input Grid 和 Animation Grid -->
+        <div class="grid-section">
+            <h3>Grid Map</h3>
+            <div id="grid" class="grid-container"></div>
+        </div>
+        <div class="grid-section">
+            <h3>Animation Grid</h3>
+            <div id="animationGrid" class="grid-container"></div>
+        </div>
+
+        <!-- 第二排：Value Matrix 和 Policy Matrix -->
+        <div class="grid-section">
+            <h3>Value Matrix</h3>
+            <div id="valueGrid" class="grid-container"></div>
+        </div>
+        <div class="grid-section">
+            <h3>Policy Matrix</h3>
+            <div id="policyGrid" class="grid-container"></div>
+        </div>
+    </div>
+
+
+    <script>
+        // 儲存使用者選擇的 n
+        const gridSizeSelect = document.getElementById("gridSize");
+        if (localStorage.getItem("selectedGridSize")) {
+            gridSizeSelect.value = localStorage.getItem("selectedGridSize");
+        }
+
+        gridSizeSelect.addEventListener("change", function () {
+            localStorage.setItem("selectedGridSize", this.value);
+        });
+
+        // 取得 n 的數值
+        const n = parseInt(gridSizeSelect.value);
+        const grid = document.getElementById("grid");
+        const valueGrid = document.getElementById("valueGrid");
+        const policyGrid = document.getElementById("policyGrid");
+        const animationGrid = document.getElementById("animationGrid");
+
+        function createGrid(container) {
+            container.innerHTML = ""; // 清除舊的 grid
+            container.style.gridTemplateColumns = `repeat(${n}, 45px)`;
+            let count = 1; // 初始數字
+            for (let row = 0; row < n; row++) {
+                for (let col = 0; col < n; col++) {
+                    const cell = document.createElement("div");
+                    cell.classList.add("cell");
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+
+                    // 用 <span> 來放數字，避免影響點擊
+                    const number = document.createElement("span");
+                    number.textContent = count++;
+                    cell.appendChild(number);
+
+                    container.appendChild(cell);
+                }
+            }
+        }
+
+        createGrid(grid);
+        createGrid(valueGrid);
+        createGrid(policyGrid);
+        createGrid(animationGrid);
+
+        let start = null;
+        let end = null;
+        let obstacles = [];
+
+        grid.addEventListener("click", (e) => {
+            const cell = e.target;
+            if (!cell.classList.contains("cell")) return;
+
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+
+            if (!start) {
+                cell.classList.add("start");
+                start = [row, col];
+            } else if (!end && !cell.classList.contains("start")) {
+                cell.classList.add("end");
+                end = [row, col];
+            } else if (
+                !cell.classList.contains("start") &&
+                !cell.classList.contains("end") &&
+                obstacles.length < n - 2
+            ) {
+                cell.classList.add("obstacle");
+                obstacles.push([row, col]);
+            }
+        });
+
+        document.getElementById("computeButton").addEventListener("click", () => {
+            if (!start || !end) {
+                alert("Please select start and end points.");
+                return;
+            }
+
+            fetch("/compute_policy", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ grid_size: n, start, end, obstacles }),
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    displayResults(valueGrid, data.value_matrix);
+                    displayResults(policyGrid, data.policy_matrix, true);
+                    animatePath(animationGrid, data.policy_matrix);
+                })
+                .catch((error) => console.error("Error:", error));
+        });
+
+        function animatePath(container, policyMatrix) {
+            let [row, col] = start;
+
+            function step() {
+                if (row === end[0] && col === end[1]) return;
+
+                const direction = policyMatrix[row][col];
+                if (!direction) return;
+
+                container.querySelector(`.cell[data-row='${row}'][data-col='${col}']`).style.backgroundColor = 'yellow';
+
+                const [dx, dy] = direction === '↑' ? [-1, 0] : direction === '↓' ? [1, 0] : direction === '←' ? [0, -1] : [0, 1];
+                row += dx;
+                col += dy;
+
+                setTimeout(step, 500);
+            }
+            step();
+        }
+
+        function displayResults(container, matrix, isPolicy = false) {
+            container.querySelectorAll(".cell").forEach((cell) => {
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
+                cell.textContent = isPolicy
+                    ? matrix[row][col]
+                    : matrix[row][col].toFixed(2);
+            });
+        }
+    </script>
+</body>
+
+</html>
