@@ -1,0 +1,17 @@
+2025-05-14 15:56:50,578 INFO    MainThread:29328 [wandb_setup.py:_flush():70] Current SDK version is 0.19.11
+2025-05-14 15:56:50,578 INFO    MainThread:29328 [wandb_setup.py:_flush():70] Configure stats pid to 29328
+2025-05-14 15:56:50,578 INFO    MainThread:29328 [wandb_setup.py:_flush():70] Loading settings from C:\Users\tsai\.config\wandb\settings
+2025-05-14 15:56:50,578 INFO    MainThread:29328 [wandb_setup.py:_flush():70] Loading settings from C:\Users\tsai\Desktop\mini_behavior\wandb\settings
+2025-05-14 15:56:50,578 INFO    MainThread:29328 [wandb_setup.py:_flush():70] Loading settings from environment variables
+2025-05-14 15:56:50,578 INFO    MainThread:29328 [wandb_init.py:setup_run_log_directory():724] Logging user logs to C:\Users\tsai\Desktop\mini_behavior\wandb\run-20250514_155650-1q29idq2\logs\debug.log
+2025-05-14 15:56:50,579 INFO    MainThread:29328 [wandb_init.py:setup_run_log_directory():725] Logging internal logs to C:\Users\tsai\Desktop\mini_behavior\wandb\run-20250514_155650-1q29idq2\logs\debug-internal.log
+2025-05-14 15:56:50,582 ERROR   MainThread:29328 [util.py:get_module():261] Error importing optional module tensorboard
+Traceback (most recent call last):
+  File "C:\Users\tsai\Desktop\mini_behavior\virtual_env\lib\site-packages\wandb\util.py", line 254, in get_module
+    return import_module(name)
+  File "C:\Users\tsai\AppData\Local\Programs\Python\Python39\lib\importlib\__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 984, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'tensorboard'

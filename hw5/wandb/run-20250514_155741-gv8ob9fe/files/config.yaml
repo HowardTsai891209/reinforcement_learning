@@ -1,0 +1,305 @@
+_current_progress_remaining:
+    value: 1
+_custom_logger:
+    value: "False"
+_episode_num:
+    value: 0
+_last_episode_starts:
+    value: '[ True]'
+_last_obs:
+    value: |-
+        [[[[84  0  0 ...  0  0  0]
+           [84  0  0 ...  0  0  0]
+           [84  0  0 ...  0  0  0]
+           ...
+           [84  0  0 ...  0  0  0]
+           [84  0  0 ...  0  0  0]
+           [84  0  0 ...  0  0  0]]
+
+          [[ 1  0  0 ...  0  0  0]
+           [ 1  0  0 ...  0  0  0]
+           [ 1  0  0 ...  0  0  0]
+           ...
+           [ 1  0  0 ...  0  0  0]
+           [ 1  0  0 ...  0  0  0]
+           [ 1  0  0 ...  0  0  0]]
+
+          [[ 1  0  0 ...  0  0  0]
+           [ 1  0  0 ...  0  0  0]
+           [ 1  0  0 ...  0  0  0]
+           ...
+           [ 1  0  0 ...  0  0  0]
+           [ 1  0  0 ...  0  0  0]
+           [ 1  0  0 ...  0  0  0]]
+
+          ...
+
+          [[ 1  0  0 ...  0  0  0]
+           [ 1  0  0 ...  0  0  0]
+           [ 1  0  0 ...  0  0  0]
+           ...
+           [ 1  0  0 ...  0  0  0]
+           [ 1  0  0 ...  0  0  0]
+           [ 1  0  0 ...  0  0  0]]
+
+          [[ 1  0  0 ...  0  0  0]
+           [ 1  0  0 ...  0  0  0]
+           [ 1  0  0 ...  0  0  0]
+           ...
+           [ 1  0  0 ...  0  0  0]
+           [ 1  0  0 ...  0  0  0]
+           [ 1  0  0 ...  0  0  0]]
+
+          [[ 1  0  0 ...  0  0  0]
+           [ 1  0  0 ...  0  0  0]
+           [ 1  0  0 ...  0  0  0]
+           ...
+           [ 1  0  0 ...  0  0  0]
+           [ 1  0  0 ...  0  0  0]
+           [ 1  0  0 ...  0  0  0]]]]
+_last_original_obs:
+    value: None
+_logger:
+    value: <stable_baselines3.common.logger.Logger object at 0x00000173BFF2DEE0>
+_n_updates:
+    value: 0
+_num_timesteps_at_start:
+    value: 0
+_total_timesteps:
+    value: 5e+06
+_vec_normalize_env:
+    value: None
+_wandb:
+    value:
+        cli_version: 0.19.11
+        code_path: code/train_rl_agent.py
+        m: []
+        python_version: 3.9.0
+        t:
+            "1":
+                - 1
+                - 55
+            "2":
+                - 1
+                - 55
+            "3":
+                - 3
+                - 16
+                - 22
+                - 23
+                - 35
+                - 55
+            "4": 3.9.0
+            "5": 0.19.11
+            "8":
+                - 3
+                - 5
+            "12": 0.19.11
+            "13": windows-amd64
+action_noise:
+    value: None
+action_space:
+    value: Discrete(15)
+algo:
+    value: PPO
+batch_size:
+    value: 64
+clip_range:
+    value: <function constant_fn.<locals>.func at 0x00000173BFEF4550>
+clip_range_vf:
+    value: None
+device:
+    value: cpu
+ent_coef:
+    value: 0
+env:
+    value: <stable_baselines3.common.vec_env.dummy_vec_env.DummyVecEnv object at 0x00000173B29170D0>
+env_name:
+    value: MiniGrid-InstallingAPrinter-10x10-N2-v0
+ep_info_buffer:
+    value: deque([], maxlen=100)
+ep_success_buffer:
+    value: deque([], maxlen=100)
+eval_env:
+    value: None
+gae_lambda:
+    value: 0.95
+gamma:
+    value: 0.99
+learning_rate:
+    value: 0.0003
+lr_schedule:
+    value: <function constant_fn.<locals>.func at 0x00000173B25FE430>
+max_grad_norm:
+    value: 0.5
+n_envs:
+    value: 1
+n_epochs:
+    value: 10
+n_steps:
+    value: 8000
+normalize_advantage:
+    value: "True"
+num_timesteps:
+    value: 0
+observation_space:
+    value: |-
+        Box([[[0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]
+          ...
+          [0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]]
+
+         [[0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]
+          ...
+          [0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]]
+
+         [[0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]
+          ...
+          [0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]]
+
+         ...
+
+         [[0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]
+          ...
+          [0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]]
+
+         [[0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]
+          ...
+          [0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]]
+
+         [[0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]
+          ...
+          [0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]
+          [0 0 0 ... 0 0 0]]], [[[255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]
+          ...
+          [255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]]
+
+         [[255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]
+          ...
+          [255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]]
+
+         [[255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]
+          ...
+          [255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]]
+
+         ...
+
+         [[255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]
+          ...
+          [255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]]
+
+         [[255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]
+          ...
+          [255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]]
+
+         [[255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]
+          ...
+          [255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]
+          [255 255 255 ... 255 255 255]]], (7, 7, 32), uint8)
+policy:
+    value: |-
+        ActorCriticCnnPolicy(
+          (features_extractor): MinigridFeaturesExtractor(
+            (cnn): Sequential(
+              (0): Conv2d(7, 32, kernel_size=(2, 2), stride=(1, 1))
+              (1): ReLU()
+              (2): Conv2d(32, 32, kernel_size=(2, 2), stride=(1, 1))
+              (3): ReLU()
+              (4): Conv2d(32, 64, kernel_size=(2, 2), stride=(1, 1))
+              (5): ReLU()
+              (6): Flatten(start_dim=1, end_dim=-1)
+            )
+            (linear): Sequential(
+              (0): Linear(in_features=7424, out_features=128, bias=True)
+              (1): ReLU()
+            )
+          )
+          (mlp_extractor): MlpExtractor(
+            (shared_net): Sequential()
+            (policy_net): Sequential(
+              (0): Linear(in_features=128, out_features=64, bias=True)
+              (1): Tanh()
+              (2): Linear(in_features=64, out_features=64, bias=True)
+              (3): Tanh()
+            )
+            (value_net): Sequential(
+              (0): Linear(in_features=128, out_features=64, bias=True)
+              (1): Tanh()
+              (2): Linear(in_features=64, out_features=64, bias=True)
+              (3): Tanh()
+            )
+          )
+          (action_net): Linear(in_features=64, out_features=15, bias=True)
+          (value_net): Linear(in_features=64, out_features=1, bias=True)
+        )
+policy_class:
+    value: <class 'stable_baselines3.common.policies.ActorCriticCnnPolicy'>
+policy_kwargs:
+    value: '{''features_extractor_class'': <class ''__main__.MinigridFeaturesExtractor''>, ''features_extractor_kwargs'': {''features_dim'': 128}}'
+policy_type:
+    value: CnnPolicy
+rollout_buffer:
+    value: <stable_baselines3.common.buffers.RolloutBuffer object at 0x00000173B2917250>
+sde_sample_freq:
+    value: -1
+seed:
+    value: None
+start_time:
+    value: 1747209464818720600
+target_kl:
+    value: None
+tensorboard_log:
+    value: ./runs/gv8ob9fe
+total_timesteps:
+    value: 5e+06
+use_sde:
+    value: "False"
+verbose:
+    value: 1
+vf_coef:
+    value: 0.5

@@ -1,0 +1,46 @@
+{
+  "os": "Windows-10-10.0.19041-SP0",
+  "python": "CPython 3.9.0",
+  "startedAt": "2025-05-14T07:57:41.798794Z",
+  "args": [
+    "--task",
+    "InstallingAPrinter"
+  ],
+  "program": "C:\\Users\\tsai\\Desktop\\mini_behavior\\train_rl_agent.py",
+  "codePath": "train_rl_agent.py",
+  "git": {
+    "remote": "https://github.com/StanfordVL/mini_behavior.git",
+    "commit": "37cbc3f9e92fba23baae32fae7b8295df2331945"
+  },
+  "email": "b0922183548@gmail.com",
+  "root": "C:\\Users\\tsai\\Desktop\\mini_behavior",
+  "host": "DESKTOP-8J29A3N",
+  "executable": "C:\\Users\\tsai\\Desktop\\mini_behavior\\virtual_env\\Scripts\\python.exe",
+  "codePathLocal": "train_rl_agent.py",
+  "cpu_count": 6,
+  "cpu_count_logical": 6,
+  "gpu": "NVIDIA GeForce RTX 3050",
+  "gpu_count": 1,
+  "disk": {
+    "/": {
+      "total": "511392063488",
+      "used": "290542075904"
+    }
+  },
+  "memory": {
+    "total": "34216488960"
+  },
+  "cpu": {
+    "count": 6,
+    "countLogical": 6
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA GeForce RTX 3050",
+      "memoryTotal": "8589934592",
+      "cudaCores": 2560,
+      "architecture": "Ampere"
+    }
+  ],
+  "cudaVersion": "12.8"
+}
